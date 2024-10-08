@@ -127,15 +127,16 @@ def luo_uusi_saari():
         x = random.randint(100, 800) # Jätetään vähän reunoja, että saari ei mene ruudun ulkopuolelle
         y = random.randint(100, 700)
         if tarkista_voiko_saaren_luoda(x, y): # Jos saari voidaan luoda
+            tulivuori.play() # Soitetaan tulivuoriääni
             kuva = canvas.create_rectangle(x, y, x + 100, y + 100, fill='yellow')# Piirretään saari
             nimi_teksi = canvas.create_text(x + 50, y + 50, text=saaren_nimi, fill='black', font=('Arial', 15, "bold")) # Lisätään saarelle nimi
             apina_maara_teksti = f"Apinoita saarella{0}" # Teksti apinoiden määrästä
-            apinoiden_maara_elementti = canvas.create_text(x + 50, y - 50, text=apina_maara_teksti, fill='black', font=('Arial', 10, "bold"), tag="apina_maara") # Lisätään apinoiden määrä
-            saaret[saaren_nimi] = {"x": x, "y": y, "kuva": kuva, "apina_maara": 0, "apinat": None, "nimi_teksti":nimi_teksi, "apina_maara_teksti":apinoiden_maara_elementti} # Tallennetaan saaren tiedot
-            tulivuori.play() # Soitetaan tulivuoriääni
-            for i in range(10):
+            apinoiden_maara_elementti = canvas.create_text(x + 50, y - 50, text=apina_maara_teksti, fill='black', font=('Arial', 10, "bold"), tag="apina_maara") # Lisätään apinoiden määrä näkymään saaren yläpuolella
+            saaret[saaren_nimi] = {"x": x, "y": y, "kuva": kuva, "apina_maara": 0, "apinat": None, "nimi_teksti":nimi_teksi, "apina_maara_teksti":apinoiden_maara_elementti,"matkailutietoinen":False} # Tallennetaan saaren tiedot
+           
+            for i in range(10): # Lisätään saarelle 10 apinaa
                 lisaa_apina(saaren_nimi)
-                paivita_apinamaara(saaren_nimi)
+                paivita_apinamaara(saaren_nimi) # Päivitetään apinoiden määrä Canvasissa
             break
         else:
             print("Saari liian lähellä toista saarta, arvotaan uusi sijainti")
@@ -190,6 +191,41 @@ def paivita_apinamaara(saaren_nimi):
     apinoiden_maara_elementti = canvas.create_text(saaret[saaren_nimi]["x"] + 50, saaret[saaren_nimi]["y"] - 30, text=apina_maara_uusi_teksti, fill='black', font=('Arial', 10, "bold"), tag="apina_maara") # Näytetään teksti canvasissa
     saaret[saaren_nimi]["apina_maara_teksti"] = apinoiden_maara_elementti # Päivitetään saaren tietoihin se uusi teksti
 
+def luo_laituri(saaren_nimi):
+    print("Luodaan laituri saarelle", saaren_nimi)
+    saari_x = saaret[saaren_nimi]["x"] # Haetaan saaren x-koordinaatti
+    saari_y = saaret[saaren_nimi]["y"] # Haetaan saaren y-koordinaatti
+    saari_leveys = 100 # Saaren leveys
+    saari_korkeus = 100 # Saaren korkeus
+    # Halutaan luoda laituri saaren etelä,-pohjois,-itä- ja länsipuolelle
+    laituri_ita_x = saari_x + saari_leveys # Itäpuolen laituri
+    laituri_ita_y = saari_y + 40  # itäpuolen laituri
+    laituri_lansi_x = saari_x -20  # Länsipuolen laituri
+    laituri_lansi_y = saari_y + 40 # Länsipuolen laituri
+    laituri_pohjoinen_x = saari_x + 40 # Pohjoispuolen laituri
+    laituri_pohjoinen_y = saari_y - 20 # Pohjoispuolen laituri
+    laituri_etela_x = saari_x + 40 # Eteläpuolen laituri
+    laituri_etela_y = saari_y + saari_korkeus # Eteläpuolen laituri
+    # Piirretään laiturit
+    ita_laituri_elementti = canvas.create_rectangle(laituri_ita_x, laituri_ita_y, laituri_ita_x + 20, laituri_ita_y + 20, fill='black')
+    lansi_laituri_elementti = canvas.create_rectangle(laituri_lansi_x, laituri_lansi_y, laituri_lansi_x + 20, laituri_lansi_y + 20, fill='black')
+    pohjoinen_laituri_elementti = canvas.create_rectangle(laituri_pohjoinen_x, laituri_pohjoinen_y, laituri_pohjoinen_x + 20, laituri_pohjoinen_y + 20, fill='black')
+    etela_laituri_elementti = canvas.create_rectangle(laituri_etela_x, laituri_etela_y, laituri_etela_x + 20, laituri_etela_y + 20, fill='black')
+    # Tallennetaan laiturit saaren tietoihin
+    saaret[saaren_nimi]["ita_laituri"] = ita_laituri_elementti
+    saaret[saaren_nimi]["lansi_laituri"] = lansi_laituri_elementti
+    saaret[saaren_nimi]["pohjoinen_laituri"] = pohjoinen_laituri_elementti
+    saaret[saaren_nimi]["etela_laituri"] = etela_laituri_elementti
+
+
+# Funktio, joka muuttaa S1 saaren matkailutietoiseksi
+def muuta_s1_matkailutietoiseksi():
+    print("Muutetaan S1 saari matkailutietoiseksi")
+    saaret["S1"]["matkailutietoinen"] = True # Muutetaan S1 saari matkailutietoiseksi
+    luo_laituri("S1") # Luodaan laituri S1 saarelle
+    # Tähän jäi!! TEE APINA UI FUNKTIO!!
+  
+
 # Nappi, joka luo uuden saaren
 tulivuorenpurkaus_nappi = Button(root, text='Tulivuorenpurkaus', command=luo_uusi_saari)
 tulivuorenpurkaus_nappi.place(x=50, y=800)
@@ -205,6 +241,9 @@ apina_uimaan_nappi.place(x=430, y=800)
 #Debuggaus nappi
 saarella_olevat_apinat_nappi = Button(root, text='Saarella olevat apinat', command=lambda: print([n for n in apinat if apinat[n]["saarella"] == True and apinat[n]["kuollut"]==False]))
 saarella_olevat_apinat_nappi.place(x=600, y=800)
+#Nappi, jolla muutta S1 saaren matkailutietoiseksi
+muuta_s1_saari_matkailutietoiseksi_nappi = Button(root, text="S1 matkailutietoiseksi", command=muuta_s1_matkailutietoiseksi)
+muuta_s1_saari_matkailutietoiseksi_nappi.place(x=50, y=850)
 
 # Käynnistetään pääikkuna
 root.mainloop()
