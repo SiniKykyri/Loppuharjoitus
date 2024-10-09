@@ -21,6 +21,7 @@ apina9 = pygame.mixer.Sound('1800.mp3')
 apina10 = pygame.mixer.Sound('1900.mp3')
 nauru = pygame.mixer.Sound('nauru.wav')
 hai = pygame.mixer.Sound('hai.wav')
+ui = pygame.mixer.Sound('beep.wav')
 
 # Funktio äänen soittamiselle
 def play_sound(sound):
@@ -55,21 +56,24 @@ lukko = threading.Lock() # APINOIDEN ELÄMÄÄ - NAURU LYHENTÄÄ IKÄÄ (10 PIS
 def soita_apinan_aani(apinan_nimi, saaren_nimi):
     global maalla_kuolleet_apinat, meressa_kuolleet_apinat
     while not pysaytetty: # Jos ääntelyä ei ole pyydetty pysäyttämään, niin soitetaan ääntä
+        if (apinat[apinan_nimi]["thredi_lopeta"] == True): # Jos tietyn apinan thredi on pyydetty lopettamaan, niin lopetetaan se
+            #print("Pysäytetään apinan ääni", apinan_nimi)
+            return
         if (apinat[apinan_nimi]["saarella"] == True and apinat[apinan_nimi]["kuollut"]==False): # Jos apina on saarella ja se on elossa sillä on mahdollisuus kuolla nauruun
             if random.random() < 0.01: # Arvotaan luku 0.0-1.0 ja jos se on pienempi kuin 0.01, niin apina kuolee
-                print("Apina kuoli", apinan_nimi)
+                #print("Apina kuoli", apinan_nimi)
                 with lukko:
                     play_sound(nauru) # Soitetaan nauruääni
                     maalla_kuolleet_apinat += 1 # Lisätään maalla kuolleiden apinoiden määrää
                     saaret[saaren_nimi]["apina_maara"] -= 1 # Vähennetään saaren apinoiden määrää
-                    paivita_apinamaara(saaren_nimi) # Päivitetään apinoiden määrä Canvasissa
                     paivita_kuolleet_apinat() # Päivitetään teksti Canvasissa
                     canvas.delete(apinat[apinan_nimi]["kuva"]) # Poistetaan apinan kuva Canvasista
                     apinat[apinan_nimi]["kuollut"] = True # Merkitään apina kuolleeksi
-                    return
+                paivita_apinamaara(saaren_nimi) # Päivitetään apinoiden määrä Canvasissa
+                return
             else:
                 play_sound(apinat[apinan_nimi]["aani"]) # Soitetaan apinan ääntä, jos apina ei kuollut
-                print("Soitetaan apinan ääntä", apinan_nimi , apinat[apinan_nimi]["aani"]) # Tulostetaan apinan nimi ja ääni. Ääni tulostuu pygamen takia nyt muisti paikkana, mutta sieltä kyllä näkee että kaikilla on oma ääni ja aina sama.
+                #print("Soitetaan apinan ääntä", apinan_nimi , apinat[apinan_nimi]["aani"]) # Tulostetaan apinan nimi ja ääni. Ääni tulostuu pygamen takia nyt muisti paikkana, mutta sieltä kyllä näkee että kaikilla on oma ääni ja aina sama.
                 play_sound(apinat[apinan_nimi]["aani"])
                 time.sleep(2)
                 stop_sound(apinat[apinan_nimi]["aani"])
@@ -102,7 +106,7 @@ i_apina_aanet = 0
 # Funktio, joka lisää apinan saarelle
 def lisaa_apina(saaren_nimi):
     global i_apina_aanet
-    print("Tullaan lisäämään apina saarelle", saaren_nimi)
+    #print("Tullaan lisäämään apina saarelle", saaren_nimi)
     apinan_nimi = 'A' + str(len(apinat) + 1) # Apinan nimi on A1, A2, A3, jne.
     # Arvotaan apinalle koordinaatit
     x = random.randint(saaret[saaren_nimi]["x"], saaret[saaren_nimi]["x"]+ 90) #Haetaan saaren koordinaatit ja arvotaan arvot niiden välistä
@@ -110,7 +114,7 @@ def lisaa_apina(saaren_nimi):
     apinan_kuva = canvas.create_oval(x, y, x + 10, y + 10, fill='brown') # Piirretään apina
     apinan_aani = apina_aanet[i_apina_aanet] # Valitaan apinalle ääni
     i_apina_aanet += 1 # Seuraava apina saa seuraavan äänen
-    apinat[apinan_nimi] = {"x": x, "y": y, "kuva": apinan_kuva, "saari": saaren_nimi, "aani": apinan_aani, "saarella": True, "kuollut":False} # Tallennetaan apinan tiedot
+    apinat[apinan_nimi] = {"x": x, "y": y, "kuva": apinan_kuva, "saari": saaren_nimi, "aani": apinan_aani, "saarella": True, "kuollut":False, "thredi_lopeta": False} # Tallennetaan apinan tiedot
     saaret[saaren_nimi]["apina_maara"] += 1 # Lisätään saaren apinoiden määrää
     apinat[apinan_nimi]["thredi"] = threading.Thread(target=soita_apinan_aani, args=(apinan_nimi,saaren_nimi)) # Soitetaan apinan ääni
     apinat[apinan_nimi]["thredi"].start() # Käynnistetään ääni
@@ -120,7 +124,6 @@ def luo_uusi_saari():
     global i_apina_aanet
     i_apina_aanet = 0 #Nollataan apinoiden äänien lisäys indeksi, jotta voidaan aloittaa äänien jakaminen alusta.
     while True:
-        print("Tulivuorenpurkaus nappia painettu")
         # Luodaan saarelle nimi
         saaren_nimi = 'S' + str(len(saaret) + 1) # Saaren nimi on S1, S2, S3, jne.
         # Arvotaan koordinaatit johon saari luodaan
@@ -131,8 +134,8 @@ def luo_uusi_saari():
             kuva = canvas.create_rectangle(x, y, x + 100, y + 100, fill='yellow')# Piirretään saari
             nimi_teksi = canvas.create_text(x + 50, y + 50, text=saaren_nimi, fill='black', font=('Arial', 15, "bold")) # Lisätään saarelle nimi
             apina_maara_teksti = f"Apinoita saarella{0}" # Teksti apinoiden määrästä
-            apinoiden_maara_elementti = canvas.create_text(x + 50, y - 50, text=apina_maara_teksti, fill='black', font=('Arial', 10, "bold"), tag="apina_maara") # Lisätään apinoiden määrä näkymään saaren yläpuolella
-            saaret[saaren_nimi] = {"x": x, "y": y, "kuva": kuva, "apina_maara": 0, "apinat": None, "nimi_teksti":nimi_teksi, "apina_maara_teksti":apinoiden_maara_elementti,"matkailutietoinen":False} # Tallennetaan saaren tiedot
+            apinoiden_maara_elementti = canvas.create_text(x + 50, y - 50, text=apina_maara_teksti, fill='black', font=('Arial', 10, "bold")) # Lisätään apinoiden määrä näkymään saaren yläpuolella
+            saaret[saaren_nimi] = {"x": x, "y": y, "kuva": kuva, "apina_maara": 0, "apinat": None, "nimi_teksti":nimi_teksi, "apina_maara_teksti":apinoiden_maara_elementti,"matkailutietoinen":False,"lahetetaan_apinoita":False} # Tallennetaan saaren tiedot
            
             for i in range(10): # Lisätään saarelle 10 apinaa
                 lisaa_apina(saaren_nimi)
@@ -161,7 +164,7 @@ def tyhjenna():
 
 # Funktio, joka sijoittaa apinan uimaan saaren viereen
 def apina_uimaan():
-    print("Apina uimaan painettu")
+    #print("Apina uimaan painettu")
     saarella_olevat_apinat = [n for n in apinat if apinat[n]["saarella"] == True and apinat[n]["kuollut"]==False] # Haetaan kaikki saarella olevat apinat, jotka ovat elossa
     if not saarella_olevat_apinat: # Jos saarella ei ole enää apinoita
         print("Ei enää apinoita saarella")
@@ -186,9 +189,10 @@ def paivita_kuolleet_apinat():
     teksti = canvas.create_text(500, 850, text=kuolleet_apinat, fill='white', font=('Arial', 15), tag="kuolleet_apinat") # Näytetään teksti canvasissa
 # Funktio, joka päivittää saaren reaaliaikaisen apinamäärän
 def paivita_apinamaara(saaren_nimi):
+    print("Päivitetään apinoiden määrä saarelle", saaren_nimi)
     canvas.delete(saaret[saaren_nimi]["apina_maara_teksti"]) # Poistetaan saaren oma vanha teksti
     apina_maara_uusi_teksti = f"Apinoita saarella: {saaret[saaren_nimi]['apina_maara']}" # Luodaan uusi teksti apinoiden määrästä
-    apinoiden_maara_elementti = canvas.create_text(saaret[saaren_nimi]["x"] + 50, saaret[saaren_nimi]["y"] - 30, text=apina_maara_uusi_teksti, fill='black', font=('Arial', 10, "bold"), tag="apina_maara") # Näytetään teksti canvasissa
+    apinoiden_maara_elementti = canvas.create_text(saaret[saaren_nimi]["x"] + 50, saaret[saaren_nimi]["y"] - 30, text=apina_maara_uusi_teksti, fill='black', font=('Arial', 10, "bold")) # Näytetään teksti canvasissa
     saaret[saaren_nimi]["apina_maara_teksti"] = apinoiden_maara_elementti # Päivitetään saaren tietoihin se uusi teksti
 
 def luo_laituri(saaren_nimi):
@@ -217,14 +221,114 @@ def luo_laituri(saaren_nimi):
     saaret[saaren_nimi]["pohjoinen_laituri"] = pohjoinen_laituri_elementti
     saaret[saaren_nimi]["etela_laituri"] = etela_laituri_elementti
 
+# Globaali muuttuja, joka kertoo onko apinamäärän tarkistus käynnissä
+tarkistus_kaynnissa = False
+# Funktio, joka tarkistaa apinamäärän ja kutsuu uudestaan arvo_apina_uimaan_ilmansuunta funktiota, mikäli apinoita on tarpeeksi
+def tarkista_apinamaara(saaren_nimi):
+    global tarkistus_kaynnissa
+    while tarkistus_kaynnissa: 
+        print("Tarkistellaan nyt omassa thredissä apinoiden määärää" , saaren_nimi)
+        if saaret[saaren_nimi]["apina_maara"] > 0:
+            print("Apinoita on jälleen saarella, kutstaan uudestaan arvo_apina_uimaan_ilmansuunta funktiota", saaren_nimi)
+            threading.Thread(target=arvo_apina_uimaan_ilmansuunta, args=(saaren_nimi,)).start() # Käynnistetään apinoiden lähetys uudestaan
+            tarkistus_kaynnissa = False # Muutetaan lippu, jotta tarkistus lopetetaan
+            return
+        else:
+            print("Odotellaan edelleen apinoita saarelle", saaren_nimi)
+            tarkistus_kaynnissa = True # Muutetaan lippu, jotta tarkistus jatkuu
+
+def arvo_apina_uimaan_ilmansuunta(saaren_nimi):
+    print("Arvotaan apina uimaan!", saaren_nimi)
+    arvottavat_apinat = [n for n in apinat if apinat[n]["saari"] == saaren_nimi and apinat[n]["saarella"]==True and apinat[n]["kuollut"]==False] # Haetaan kaikki kyseisellä saarella olevat apinat, joiden tila on saarella ja ne ovat elossa.
+   
+    if(saaret[saaren_nimi]["apina_maara"] > 0): # Jos saarella on vielä apinoita
+        arvottu_apina = random.choice(arvottavat_apinat) # Arvotaan apina
+        apinat[arvottu_apina]["saarella"] = False # Muutetaan apinan tila merelle
+        saaret[saaren_nimi]["apina_maara"] -= 1 # Vähennetään saaren apinoiden määrää
+        paivita_apinamaara(saaren_nimi) # Päivitetään apinoiden määrä Canvasissa
+        
+        suunta = random.choice(["ita", "lansi", "pohjoinen", "etela"]) # Arvotaan lähteekö apina uimaan itään, länteen, pohjoiseen vai etelään
+        print("Arvottu suunta", suunta)
+        # Siirretään apina oikean ilmansuunnan laiturille
+        if suunta == "ita":
+            uimaan_x = saaret[saaren_nimi]["x"] + 100
+            uimaan_y = saaret[saaren_nimi]["y"] + 40
+        elif suunta == "lansi":
+            uimaan_x = saaret[saaren_nimi]["x"] - 20
+            uimaan_y = saaret[saaren_nimi]["y"] + 40
+        elif suunta == "pohjoinen":
+            uimaan_x = saaret[saaren_nimi]["x"] + 40
+            uimaan_y = saaret[saaren_nimi]["y"] - 20
+        elif suunta == "etela":
+            uimaan_x = saaret[saaren_nimi]["x"] + 40
+            uimaan_y = saaret[saaren_nimi]["y"] + 100
+
+        canvas.coords(apinat[arvottu_apina]["kuva"], uimaan_x, uimaan_y, uimaan_x + 10, uimaan_y + 10) # Siirretään apina uimaan
+        apinat[arvottu_apina]["x"] = uimaan_x # Päivitetään apinan x-koordinaatti
+        apinat[arvottu_apina]["y"] = uimaan_y # Päivitetään apinan y-koordinaatti
+        canvas.tag_raise(apinat[arvottu_apina]["kuva"]) # Nostetaan kuvan prioretettia, jotta se näkyy päällimmäisenä
+
+        apinat[arvottu_apina]["thredi_lopeta"] = True # Muutetaan apinan henkilökohtainen lippu, jotta thredi lopetetaan
+        apinat[arvottu_apina]["thredi"] = threading.Thread(target=liikuta_apinaa_merella, args=(arvottu_apina, suunta)) # Luodaan uusi thredi, joka liikuttaa apinaa merellä
+        apinat[arvottu_apina]["thredi"].start() # Käynnistetään thredi
+
+        threading.Timer(3, arvo_apina_uimaan_ilmansuunta, args=(saaren_nimi,)).start() # Käynnistetään uusi thredi, joka arpoo apinan uimaan 10 sekunnin välein
+    else:
+        print("Ei enää apinoita saarella, lopetetaan lähetys ja käynnistetään tarkistus", saaren_nimi)
+        paivita_apinamaara(saaren_nimi) # Päivitetään apinoiden määrä Canvasissa
+        threading.Thread(target=tarkista_apinamaara,args=(saaren_nimi,)).start() # Käynnistetään funktio, joka tarkistaa apinoiden määrän
+         
+# Funktio, joka liikuttaa apinaa merellä
+def liikuta_apinaa_merella(apinan_nimi, suunta):
+    global meressa_kuolleet_apinat
+    #print("Liikutetaan apinaa merellä")
+    while True: 
+        if apinat[apinan_nimi]["kuollut"] == False and apinat[apinan_nimi]["saarella"]== False : # Jos apina ei ole kuollut ja se on merellä
+            if random.random() < 0.01:# sillä on mahdollisuus kuolla hain syömäksi
+                #print("Apina tuli hain syömäksi", apinan_nimi)
+                with lukko:
+                    play_sound(hai) # Soitetaan haiääni
+                    meressa_kuolleet_apinat += 1 # Lisätään meressä kuolleiden apinoiden määrää
+                    paivita_kuolleet_apinat() # Päivitetään teksti Canvasissa
+                    canvas.delete(apinat[apinan_nimi]["kuva"])
+                    apinat[apinan_nimi]["kuollut"] = True # Merkitään apina kuolleeksi
+                    return
+            else:
+                if suunta == "ita": # Liikutetaan apinaa merellä aina 5 pikseliä kerrallaan, sen mukaan miltä laiturilta apina lähtee.
+                    apinat[apinan_nimi]["x"] += 5 
+                elif suunta == "lansi":
+                    apinat[apinan_nimi]["x"] -= 5
+                elif suunta == "pohjoinen":
+                    apinat[apinan_nimi]["y"] -= 5
+                elif suunta == "etela":
+                    apinat[apinan_nimi]["y"] += 5
+                canvas.coords(apinat[apinan_nimi]["kuva"], apinat[apinan_nimi]["x"], apinat[apinan_nimi]["y"], apinat[apinan_nimi]["x"] + 10, apinat[apinan_nimi]["y"] + 10) # Siirretään apinaa
+                play_sound(ui) # Soitetaan ui ääni
+                for saari_nimi, saari_data in saaret.items(): # Käydään läpi kaikki saaret
+                    saari_x = saari_data["x"] # Haetaan saaren x-koordinaatti
+                    saari_y = saari_data["y"] # Haetaan saaren y-koordinaatti
+                    saari_koko = 100 # Saaren koko
+                    if(saari_x <= apinat[apinan_nimi]["x"] <= saari_x + saari_koko and saari_y <= apinat[apinan_nimi]["y"] <= saari_y + saari_koko):
+                         print("Apina ui saarelle", saari_nimi)
+                         with lukko:
+                            apinat[apinan_nimi]["saarella"] = True # Muutetaan apinan sijainti saarelle
+                            apinat[apinan_nimi]["saari"] = saari_nimi # Muutetaan apinan saari
+                            saaret[saari_nimi]["apina_maara"] += 1 # Lisätään saaren apinoiden määrää
+                            saaret[saari_nimi]["matkailutietoinen"] = True # Muutetaan saari matkailutietoiseksi
+                            paivita_apinamaara(saari_nimi) # Päivitetään apinoiden määrä Canvasissa
+                            
+                            if(saaret[saari_nimi]["lahetetaan_apinoita"]==False): #Jos saari ei vielä ole lähettänyt apinoita, niin lähetetään.
+                                arvo_apina_uimaan_ilmansuunta(saari_nimi) # Käynnistetään apinoiden lähetys myös tälle saarelle
+                                luo_laituri(saari_nimi) # Luodaan laituri saarelle
+                                saaret[saari_nimi]["lahetetaan_apinoita"] = True # Muutetaan lippu, jotta apinoita ei lähetetä useasti
+                            return # Lopetaan apinan liikuttaminen
+                time.sleep(0.1) # Odotetaan sekunti ennen kuin liikutetaan uudestaan
 
 # Funktio, joka muuttaa S1 saaren matkailutietoiseksi
 def muuta_s1_matkailutietoiseksi():
     print("Muutetaan S1 saari matkailutietoiseksi")
     saaret["S1"]["matkailutietoinen"] = True # Muutetaan S1 saari matkailutietoiseksi
     luo_laituri("S1") # Luodaan laituri S1 saarelle
-    # Tähän jäi!! TEE APINA UI FUNKTIO!!
-  
 
 # Nappi, joka luo uuden saaren
 tulivuorenpurkaus_nappi = Button(root, text='Tulivuorenpurkaus', command=luo_uusi_saari)
@@ -244,6 +348,9 @@ saarella_olevat_apinat_nappi.place(x=600, y=800)
 #Nappi, jolla muutta S1 saaren matkailutietoiseksi
 muuta_s1_saari_matkailutietoiseksi_nappi = Button(root, text="S1 matkailutietoiseksi", command=muuta_s1_matkailutietoiseksi)
 muuta_s1_saari_matkailutietoiseksi_nappi.place(x=50, y=850)
+# Nappi, jolla S1 saarelta arvotaan apina uimaan
+arvo_apina_uimaan_nappi = Button(root, text="Arvo 10 apina uimaan(S1)", command= lambda: threading.Thread(target=arvo_apina_uimaan_ilmansuunta, args=("S1",)).start())
+arvo_apina_uimaan_nappi.place(x=200, y=850)
 
 # Käynnistetään pääikkuna
 root.mainloop()
