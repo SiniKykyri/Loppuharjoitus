@@ -135,7 +135,7 @@ def luo_uusi_saari():
             nimi_teksi = canvas.create_text(x + 50, y + 50, text=saaren_nimi, fill='black', font=('Arial', 15, "bold")) # Lisätään saarelle nimi
             apina_maara_teksti = f"Apinoita saarella{0}" # Teksti apinoiden määrästä
             apinoiden_maara_elementti = canvas.create_text(x + 50, y - 50, text=apina_maara_teksti, fill='black', font=('Arial', 10, "bold")) # Lisätään apinoiden määrä näkymään saaren yläpuolella
-            saaret[saaren_nimi] = {"x": x, "y": y, "kuva": kuva, "apina_maara": 0, "apinat": None, "nimi_teksti":nimi_teksi, "apina_maara_teksti":apinoiden_maara_elementti,"matkailutietoinen":False,"lahetetaan_apinoita":False} # Tallennetaan saaren tiedot
+            saaret[saaren_nimi] = {"x": x, "y": y, "kuva": kuva, "apina_maara": 0, "apinat": None, "nimi_teksti":nimi_teksi, "apina_maara_teksti":apinoiden_maara_elementti,"matkailutietoinen":False,"lahetetaan_apinoita":False, "apina_maaran_tarkistus_kaynnissa":False} # Tallennetaan saaren tiedot
            
             for i in range(10): # Lisätään saarelle 10 apinaa
                 lisaa_apina(saaren_nimi)
@@ -153,9 +153,11 @@ def tyhjenna():
     for apinan_nimi, apina_data in apinat.items(): # Käydään läpi kaikki apinat
         apina_data["thredi"].join() # Odotetaan thredin loppumista
         canvas.delete(apina_data["kuva"]) # Poistetaan apinan kuva Canvasista
-    # Poistetaan saaret
+    # Poistetaan saaret, niiden nimet ja apinoiden määrät
     for saaren_nimi, saari_data in saaret.items(): #Käydään läpi kaikki saaret
         canvas.delete(saari_data["kuva"]) # Poistetaan saaren kuva Canvasista
+        canvas.delete(saari_data["nimi_teksti"])
+        canvas.delete(saari_data["apina_maara_teksti"])
 
     apinat.clear() # Tyhjennetään apinat sanakirja
     saaret.clear() # Tyhjennetään saaret sanakirja
@@ -222,20 +224,26 @@ def luo_laituri(saaren_nimi):
     saaret[saaren_nimi]["etela_laituri"] = etela_laituri_elementti
 
 # Globaali muuttuja, joka kertoo onko apinamäärän tarkistus käynnissä
-tarkistus_kaynnissa = False
+
 # Funktio, joka tarkistaa apinamäärän ja kutsuu uudestaan arvo_apina_uimaan_ilmansuunta funktiota, mikäli apinoita on tarpeeksi
 def tarkista_apinamaara(saaren_nimi):
-    global tarkistus_kaynnissa
-    while tarkistus_kaynnissa: 
+    if saaret[saaren_nimi]["apina_maaran_tarkistus_kaynnissa"] == True: #Tämä tarkistus, jotta ei aloiteta aina uutta thrediä ja tarkistusta, mikäli tarkistus on jo käynnissä
+        print("Tarkistus jo käynnissä, ei aloiteta uudestaan")
+        return
+    
+    saaret[saaren_nimi]["apina_maaran_tarkistus_kaynnissa"] = True # Muutetaan lippu,että tarkistus on käynnissä
+    while saaret[saaren_nimi]["apina_maaran_tarkistus_kaynnissa"] == True: 
         print("Tarkistellaan nyt omassa thredissä apinoiden määärää" , saaren_nimi)
         if saaret[saaren_nimi]["apina_maara"] > 0:
             print("Apinoita on jälleen saarella, kutstaan uudestaan arvo_apina_uimaan_ilmansuunta funktiota", saaren_nimi)
             threading.Thread(target=arvo_apina_uimaan_ilmansuunta, args=(saaren_nimi,)).start() # Käynnistetään apinoiden lähetys uudestaan
-            tarkistus_kaynnissa = False # Muutetaan lippu, jotta tarkistus lopetetaan
+            saaret[saaren_nimi]["apina_maaran_tarkistus_kaynnissa"] = False # Muutetaan lippu, jotta tarkistus lopetetaan
             return
         else:
             print("Odotellaan edelleen apinoita saarelle", saaren_nimi)
-            tarkistus_kaynnissa = True # Muutetaan lippu, jotta tarkistus jatkuu
+        
+        time.sleep(1) # Odotetaan sekunti ennen kuin tarkistetaan uudestaan
+
 
 def arvo_apina_uimaan_ilmansuunta(saaren_nimi):
     print("Arvotaan apina uimaan!", saaren_nimi)
