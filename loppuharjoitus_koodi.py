@@ -57,11 +57,11 @@ def soita_apinan_aani(apinan_nimi, saaren_nimi):
     global maalla_kuolleet_apinat, meressa_kuolleet_apinat
     while not pysaytetty: # Jos ääntelyä ei ole pyydetty pysäyttämään, niin soitetaan ääntä
         if (apinat[apinan_nimi]["thredi_lopeta"] == True): # Jos tietyn apinan thredi on pyydetty lopettamaan, niin lopetetaan se
-            #print("Pysäytetään apinan ääni", apinan_nimi)
+            print("Pysäytetään apinan ääni", apinan_nimi)
             return
         if (apinat[apinan_nimi]["saarella"] == True and apinat[apinan_nimi]["kuollut"]==False): # Jos apina on saarella ja se on elossa sillä on mahdollisuus kuolla nauruun
             if random.random() < 0.01: # Arvotaan luku 0.0-1.0 ja jos se on pienempi kuin 0.01, niin apina kuolee
-                #print("Apina kuoli", apinan_nimi)
+                print("Apina kuoli", apinan_nimi)
                 with lukko:
                     play_sound(nauru) # Soitetaan nauruääni
                     maalla_kuolleet_apinat += 1 # Lisätään maalla kuolleiden apinoiden määrää
@@ -73,9 +73,7 @@ def soita_apinan_aani(apinan_nimi, saaren_nimi):
                 return
             else:
                 play_sound(apinat[apinan_nimi]["aani"]) # Soitetaan apinan ääntä, jos apina ei kuollut
-                #print("Soitetaan apinan ääntä", apinan_nimi , apinat[apinan_nimi]["aani"]) # Tulostetaan apinan nimi ja ääni. Ääni tulostuu pygamen takia nyt muisti paikkana, mutta sieltä kyllä näkee että kaikilla on oma ääni ja aina sama.
-                play_sound(apinat[apinan_nimi]["aani"])
-                time.sleep(2)
+                print("Soitetaan apinan ääntä", apinan_nimi , apinat[apinan_nimi]["aani"]) # Tulostetaan apinan nimi ja ääni. Ääni tulostuu pygamen takia nyt muisti paikkana, mutta sieltä kyllä näkee että kaikilla on oma ääni ja aina sama.
                 stop_sound(apinat[apinan_nimi]["aani"])
                 time.sleep(10) # Soitetaan ääni 10 sekunnin välein
         elif(apinat[apinan_nimi]["saarella"] == False and apinat[apinan_nimi]["kuollut"]== False): # Jos apina ei ole saarella, eli se on meressä ja jos apina ei ole kuollut
@@ -223,7 +221,6 @@ def luo_laituri(saaren_nimi):
     saaret[saaren_nimi]["pohjoinen_laituri"] = pohjoinen_laituri_elementti
     saaret[saaren_nimi]["etela_laituri"] = etela_laituri_elementti
 
-# Globaali muuttuja, joka kertoo onko apinamäärän tarkistus käynnissä
 
 # Funktio, joka tarkistaa apinamäärän ja kutsuu uudestaan arvo_apina_uimaan_ilmansuunta funktiota, mikäli apinoita on tarpeeksi
 def tarkista_apinamaara(saaren_nimi):
@@ -280,7 +277,7 @@ def arvo_apina_uimaan_ilmansuunta(saaren_nimi):
         apinat[arvottu_apina]["thredi"] = threading.Thread(target=liikuta_apinaa_merella, args=(arvottu_apina, suunta)) # Luodaan uusi thredi, joka liikuttaa apinaa merellä
         apinat[arvottu_apina]["thredi"].start() # Käynnistetään thredi
 
-        threading.Timer(3, arvo_apina_uimaan_ilmansuunta, args=(saaren_nimi,)).start() # Käynnistetään uusi thredi, joka arpoo apinan uimaan 10 sekunnin välein
+        threading.Timer(10, arvo_apina_uimaan_ilmansuunta, args=(saaren_nimi,)).start() # Käynnistetään uusi thredi, joka arpoo apinan uimaan 10 sekunnin välein
     else:
         print("Ei enää apinoita saarella, lopetetaan lähetys ja käynnistetään tarkistus", saaren_nimi)
         paivita_apinamaara(saaren_nimi) # Päivitetään apinoiden määrä Canvasissa
